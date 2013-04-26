@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{4cca1aff-7c36-4ed2-b6cd-89c0bd5c0ef1}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{f2284ddc-e621-4293-9209-4774f6be6653}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc</Extensions>
+    </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{86101871-a2cc-4af4-9678-cb53653494c7}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;png;manifest</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\Flyup.ico">
+      <Filter>resource</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Flyup.rc">
+      <Filter>resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\AppDelegate.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="Basic.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="MainMenuLayer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="MySound.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayLayer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="StopLayer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Classes\AppDelegate.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenuLayer.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="MySound.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayLayer.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="StopLayer.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
