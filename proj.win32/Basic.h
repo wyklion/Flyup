@@ -40,7 +40,7 @@
 #define PIC_QUIT "quitButton.png"
 #define PIC_QUIT_SELECTED "quitButtonSelected.png"
 
-const int s_pics_num = 20;
+const int s_pics_num = 19;
 const std::string s_pics[] = {
 	PIC_BG,
 	PIC_BALL_NORMAL,
@@ -62,7 +62,6 @@ const std::string s_pics[] = {
 	PIC_QUIT,
 	PIC_QUIT_SELECTED,
 
-	PIC_BALL1,
 	PIC_CIRCLE1,
 };
 
