@@ -20,21 +20,20 @@ enum Ball_Type
 #define BallR 40
 #define BASE_X 320
 #define BASE_Y 330
-#define DEFAULT_DIS 300
+#define DEFAULT_DIS 300.0f
 #define MOVE_TIME 3.0f
 #define CIRCLE_TIME 4.0f
+#define AUTO_SPEED 600.0f
 
 const CCPoint realCenter = ccp(BASE_X, BASE_Y);
 
 struct Ball
 {
-	Ball(Ball_Type type, int x, int y)
-		:type(type), x(x), y(y), sprite(NULL)
+	Ball(Ball_Type type)
+		:type(type), sprite(NULL)
 	{
 	}
 	Ball_Type type;
-	float x;
-	float y;
 	CCSprite* sprite;	
 };
 
@@ -59,9 +58,9 @@ public:
 	void update(float t);
 
 private:
+	void createBall(Ball_Type BALL_NORMAL, int px, int py);
 	void initBalls();
 	void move();
-	void setBallNewPosition();
 	void moveEnd();
 	void addNewBall();
 	
@@ -90,6 +89,14 @@ private:
 	CCPoint m_moveCenter;
 
 	CCSprite* m_circle1;
+
+	Ball* m_touchBall;
+	int m_height;
+	CCLabelTTF* m_heightLabel;
+	int m_calib;
+	CCLabelTTF* m_calibration;
+
+	Ball* m_lastTouch;
 
 };
 

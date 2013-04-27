@@ -36,16 +36,29 @@ bool PlayLayer::init()
 	this->addChild(m_stopMenu, LAYER_MENU);
 
 	m_dis = 300;
-	initBalls();
 	m_movable = true;
 	m_auto = false;
 	m_autoCount = 0;
 	m_touchCount = 0;
+	m_dp = ccp(0,0);
+	m_moveCenter = ccp(BASE_X, BASE_Y);
+	initBalls();
 
+	//init cricle...
 	m_circle1 = CCSprite::create(PIC_CIRCLE1);
 	m_circle1->setPosition(ccp(BASE_X, BASE_Y));
 	m_circle1->setVisible(false);
 	addChild(m_circle1, LAYER_CIRCLE);
+
+	//height label
+	m_height = 0;
+	m_heightLabel = CCLabelTTF::create("0m", "Arial", 30, CCSizeMake(150,30), kCCTextAlignmentRight);
+	m_heightLabel->setPosition(ccp(80,50));
+	addChild(m_heightLabel, LAYER_MENU);
+	m_calib = 2000;
+	m_calibration = CCLabelTTF::create("1000m", "Arial", 20, CCSizeMake(100,20), kCCTextAlignmentRight);
+	m_calibration->setPosition(ccp(60,2000+BASE_Y));
+	addChild(m_calibration, LAYER_MENU);
 
 	return true;
 }
@@ -53,6 +66,15 @@ bool PlayLayer::init()
 PlayLayer::~PlayLayer()
 {
 
+}
+
+void PlayLayer::createBall(Ball_Type type, int px, int py)
+{
+	m_allBalls.push_back(Ball(type));
+	m_allBalls.back().sprite = CCSprite::create(s_pics[type].c_str());
+	m_allBalls.back().sprite->setPosition(ccp(px, py));
+	m_allBalls.back().sprite->setAnchorPoint(ccp(0.5,0.5));
+	m_ballBatch->addChild(m_allBalls.back().sprite);
 }
 
 void PlayLayer::initBalls()
@@ -63,35 +85,10 @@ void PlayLayer::initBalls()
 	m_ballBatch->setPosition(0,0);
 	this->addChild(m_ballBatch, LAYER_BALL);
 	
-	m_allBalls.push_back(Ball(BALL_NORMAL, BASE_X, BASE_Y));
-	m_allBalls.push_back(Ball(BALL_NORMAL, BASE_X, s.height*0.5+100));
-	//m_aroundBalls.insert(&m_allBalls.back());
-	int count = 2;
-	while(count < 100)
-	{
-		int dis = 100+(rand() % BallR)*2;
-		float angle = 30+rand()%150;
-		int dx = dis * cos(angle*PI/180);
-		int dy = dis * sin(angle*PI/180);
-
-		int newx = m_allBalls.back().x + dx;
-		int newy = m_allBalls.back().y + dy;
-		if(newy > s.height-BallR)
-			break;
-		if(newx < BallR || newx > s.width-BallR)
-			continue;
-		Ball_Type type = (Ball_Type)(1 + rand() % 6);
-		m_allBalls.push_back(Ball(type, newx, newy));
-		count++;
-	}
-
-	for(std::list<Ball>::iterator iter=m_allBalls.begin();iter!=m_allBalls.end();++iter)
-	{
-		(*iter).sprite = CCSprite::create(s_pics[(*iter).type].c_str());
-		(*iter).sprite->setPosition(ccp((*iter).x, (*iter).y));
-		(*iter).sprite->setAnchorPoint(ccp(0.5,0.5));
-		m_ballBatch->addChild((*iter).sprite);
-	}
+	createBall(BALL_NORMAL, BASE_X, BASE_Y);
+	m_lastTouch = &(m_allBalls.back());
+	createBall(BALL_NORMAL, BASE_X, BASE_Y+250);
+	addNewBall();
 }
 
 void PlayLayer::addNewBall()
@@ -99,24 +96,22 @@ void PlayLayer::addNewBall()
 	while(1)
 	{
 		int dis = 100+(rand() % BallR)*2;
-		float angle = 30+rand()%150;
+		float angle = 30+rand()%120;
 		int dx = dis * cos(angle*PI/180);
 		int dy = dis * sin(angle*PI/180);
 
-		int newx = m_allBalls.back().x + dx;
-		int newy = m_allBalls.back().y + dy;
+		CCPoint pos = m_allBalls.back().sprite->getPosition();
+		int newx = pos.x + dx;
+		int newy = pos.y + dy;
 		if(newy > s.height-m_dp.y-BallR)
 			break;
 		if(newx < -m_dp.x - BallR || newx > s.width-m_dp.x-BallR)
 			continue;
 		Ball_Type type = (Ball_Type)(1 + rand() % 6);
-		m_allBalls.push_back(Ball(type, newx, newy));
-		m_allBalls.back().sprite = CCSprite::create(s_pics[m_allBalls.back().type].c_str());
-		m_allBalls.back().sprite->setPosition(ccp(newx, newy));
-		m_allBalls.back().sprite->setAnchorPoint(ccp(0.5,0.5));
-		m_ballBatch->addChild(m_allBalls.back().sprite);
+		createBall(type, newx, newy);
 	}
 }
+
 
 void PlayLayer::circleAct()
 {
@@ -135,53 +130,118 @@ void PlayLayer::stopLastMove()
 	for(std::list<Ball>::iterator iter=m_allBalls.begin();iter!=m_allBalls.end();++iter)
 	{
 		(*iter).sprite->stopAllActions();
-		CCPoint pos = (*iter).sprite->getPosition();
-		(*iter).x = pos.x;
-		(*iter).y = pos.y;
 	}
+	m_calibration->stopAllActions();
 }
 
 void PlayLayer::move()
 {
-	CCLog("move %f, %f", m_dp.x, m_dp.y);
+	//CCLog("move %f, %f", m_dp.x, m_dp.y);
 	
+	this->unscheduleUpdate();
 	stopLastMove();
+	
+	int lastY = m_lastTouch->sprite->getPosition().y;
 
-	if(!m_auto)
+	m_lastTouch = m_touchBall;
+	//get rid of balls which lower than bottom of screen...
+	while(1)
+	{
+		CCPoint pos = m_allBalls.front().sprite->getPosition();
+		if(pos.y < -BallR)
+		{
+			m_allBalls.front().sprite->removeFromParentAndCleanup(true);
+			m_allBalls.pop_front();
+		}
+		else
+			break;
+	}
+	
+	//reset circle radius...
+	m_dis = DEFAULT_DIS;
+	//move center
+	m_moveCenter = m_touchBall->sprite->getPosition();
+	//move delta
+	m_dp = ccp(BASE_X-m_moveCenter.x, BASE_Y-m_moveCenter.y);
+	if(m_auto)
+	{
+		m_circle1->setVisible(false);
+		m_autoCount++;
+		if(m_autoCount>10)
+		{
+			m_auto = false;
+			m_movable = true;
+		}
+	}
+	else
+	{
 		circleAct();
+		m_touchCount++;
+		if(0)//m_touchCount>2)
+		{
+			//auto fly...
+			m_auto = true;
+			m_touchCount = 0;
+			m_autoCount = 0;
+			m_movable = false;
+		}
+	}
+	
 
+	//update height label...
+	m_height += (m_moveCenter.y - lastY);
+	char buf[20];
+	sprintf(buf, "%d um", m_height/2);
+	m_heightLabel->setString(buf);
+
+
+	//add new balls...
 	addNewBall();
+
+	float t = m_auto ? sqrt(m_dp.x*m_dp.x+m_dp.y*m_dp.y) / AUTO_SPEED : MOVE_TIME;
+	//CCLog("t:%f",t);
+
+	//move calibration...
+	if(m_height-500 > m_calib)
+	{
+		m_calib+=2000;
+		sprintf(buf, "%d um", m_calib/2);
+		m_calibration->setString(buf);
+		m_calibration->setPosition(ccp(60,m_calib-m_height+m_moveCenter.y));
+		//CCLog("calib, pos: %d, %d", m_calib, m_calib-m_height+m_moveCenter.y);
+	}
+	m_calibration->runAction(CCEaseExponentialOut::create(CCMoveBy::create(t, ccp(0, m_dp.y))));
+	
 	CCArray* children = m_ballBatch->getChildren();
+	//CCLog("children %d", m_ballBatch->getChildrenCount());
 	for(unsigned int i = 0; i < m_ballBatch->getChildrenCount(); i++)
 	{
 		CCSprite* ball = (CCSprite*)children->objectAtIndex(i);
-		
 		if(m_auto)
 		{
 			if(i == m_ballBatch->getChildrenCount()-1)
 				ball->runAction(CCSequence::create(
-				CCMoveBy::create(0.5f, m_dp),
+				CCMoveBy::create(t, m_dp),
 				CCCallFunc::create(this, callfunc_selector(PlayLayer::moveEnd)),
 				NULL));
 			else
-				ball->runAction(CCMoveBy::create(0.5f, m_dp));
+				ball->runAction(CCMoveBy::create(t, m_dp));
 		}
 		else
 		{
 			if(i == m_ballBatch->getChildrenCount()-1)
 				ball->runAction(CCSequence::create(
-				CCEaseExponentialOut::create(CCMoveBy::create(MOVE_TIME, m_dp)),
+				CCEaseExponentialOut::create(CCMoveBy::create(t, m_dp)),
 				CCCallFunc::create(this, callfunc_selector(PlayLayer::moveEnd)),
 				NULL));
 			else
-				ball->runAction(CCEaseExponentialOut::create(CCMoveBy::create(MOVE_TIME, m_dp)));
+				ball->runAction(CCEaseExponentialOut::create(CCMoveBy::create(t, m_dp)));
 		}
 	}
 
 	//set all ball's x and y to new position...
 	//setBallNewPosition();
 
-	m_dis = DEFAULT_DIS;
 	if(!m_auto)
 		this->scheduleUpdate();
 
@@ -231,13 +291,6 @@ void PlayLayer::update(float t)
 
 void PlayLayer::moveEnd()
 {
-	//get rid of balls which lower than bottom of screen...
-	while(m_allBalls.front().y<-BallR)
-	{
-		m_allBalls.front().sprite->removeFromParentAndCleanup(true);
-		m_allBalls.pop_front();
-	}
-
 	if(m_auto)
 	{
 		for(std::list<Ball>::iterator iter=m_allBalls.begin();iter!=m_allBalls.end();++iter)
@@ -247,33 +300,13 @@ void PlayLayer::moveEnd()
 				continue;
 			if(getBallDisFromPoint(*iter, BASE_X, BASE_Y, DEFAULT_DIS))
 			{
-				m_circle1->setVisible(false);
-				//move center
-				m_moveCenter = p;
-				//move delta
-				m_dp = ccp(BASE_X-m_moveCenter.x, BASE_Y-m_moveCenter.y);
-				CCLog("auto move %d,%d", m_moveCenter.x, m_moveCenter.y);
-				m_autoCount++;
-				if(m_autoCount>10)
-				{
-					m_auto = false;
-					m_movable = true;
-				}
+				m_touchBall = &*iter;
 				move();
 				return;
 			}
 		}
 		m_auto = false;
 		m_movable = true;
-	}
-}
-
-void PlayLayer::setBallNewPosition()
-{
-	for(std::list<Ball>::iterator iter=m_allBalls.begin();iter!=m_allBalls.end();++iter)
-	{
-		(*iter).x += m_dp.x;
-		(*iter).y += m_dp.y;
 	}
 }
 
@@ -302,24 +335,7 @@ bool PlayLayer::ccTouchBegan(CCTouch* touch, CCEvent* event)
 		{
 			if(getBallDisFromPoint(*iter, BASE_X, BASE_Y, m_dis))
 			{
-				//stop ealier schedule...
-				this->unscheduleUpdate();
-
-				//move center...
-				m_moveCenter = p;
-				//move delta
-				m_dp = ccp(BASE_X-m_moveCenter.x, BASE_Y-m_moveCenter.y);
-				m_touchCount++;
-				if(m_touchCount>2)
-				{
-					//auto fly...
-					m_auto = true;
-					m_touchCount = 0;
-					m_autoCount = 0;
-					m_movable = false;
-				}
-
-				//move...
+				m_touchBall = &*iter;
 				move();
 
 				return true;
