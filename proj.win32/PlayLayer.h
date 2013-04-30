@@ -30,11 +30,15 @@ const CCPoint realCenter = ccp(BASE_X, BASE_Y);
 struct Ball
 {
 	Ball(Ball_Type type)
-		:type(type), sprite(NULL)
+		:type(type), sprite(NULL), render(NULL)
 	{
 	}
 	Ball_Type type;
-	CCSprite* sprite;	
+	CCSprite* sprite;
+	CCRenderTexture* render;
+	CCPoint front;
+	CCPoint now;
+	CCPoint renderPoint;
 };
 
 class PlayLayer : public CCLayer  
@@ -58,16 +62,26 @@ public:
 	void update(float t);
 
 private:
-	void createBall(Ball_Type BALL_NORMAL, int px, int py);
+	Ball* createBall(Ball_Type BALL_NORMAL, int px, int py);
 	void initBalls();
 	void move();
 	void moveEnd();
-	void addNewBall();
+	void addNewBall(int type = 0);
 	
 	bool getBallDisFromPoint(Ball& ball, float x, float y, float dis2);
 	void setTouchEnable(CCSprite* sprite, bool b);
 	void circleAct();
 	void stopLastMove();
+	
+	bool checkAround(int newx, int newy);
+	bool checkPosUpBall(Ball* ball, bool& left, bool& right);
+	Ball* createUpLeftBall(const CCPoint& pos, std::vector<Ball*>& newBalls);
+	Ball* createUpRightBall(const CCPoint& pos, std::vector<Ball*>& newBalls);
+	Ball* createUpBall(const CCPoint& pos, std::vector<Ball*>& newBalls);
+
+	Ball_Type getNextType();
+	void createLink();
+	void linking(float t);
 
 private:
 	CCMenu* m_stopMenu;
@@ -75,7 +89,9 @@ private:
 	//CCSpriteBatchNode* m_ballBatch;
 	CCNode* m_ballBatch;
 	std::list<Ball> m_allBalls;
-	std::set<Ball*> m_aroundBalls;
+	std::set<Ball*> m_baseBalls;
+	
+	std::list<Ball*> m_linkBalls;
 
 	float m_dis;
 	CCPoint m_dp;
@@ -85,7 +101,6 @@ private:
 	bool m_auto;
 	int m_autoCount;
 
-	int m_touchCount;
 	CCPoint m_moveCenter;
 
 	CCSprite* m_circle1;
@@ -97,7 +112,8 @@ private:
 	CCLabelTTF* m_calibration;
 
 	Ball* m_lastTouch;
-
+	CCNode* m_renders;
+	CCSprite* m_pBrush;
 };
 
 #endif

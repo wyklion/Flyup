@@ -26,7 +26,7 @@
 #define PIC_BALL_YELLOW "ball_yellow.png"
 #define PIC_BALL_BLUE "ball_blue.png"
 #define PIC_BALL_PURPLE "ball_purple.png"
-
+#define PIC_BRUSH "brush.png"
 
 #define PIC_ROUND "round.png"
 #define PIC_BUTTON_BACK "backButton.png"
@@ -40,7 +40,7 @@
 #define PIC_QUIT "quitButton.png"
 #define PIC_QUIT_SELECTED "quitButtonSelected.png"
 
-const int s_pics_num = 19;
+const int s_pics_num = 20;
 const std::string s_pics[] = {
 	PIC_BG,
 	PIC_BALL_NORMAL,
@@ -49,6 +49,7 @@ const std::string s_pics[] = {
 	PIC_BALL_YELLOW,
 	PIC_BALL_BLUE,
 	PIC_BALL_PURPLE,
+	PIC_BRUSH,
 
 	PIC_ROUND,
 	PIC_BUTTON_BACK,
